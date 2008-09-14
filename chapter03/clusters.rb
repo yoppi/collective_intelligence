@@ -142,6 +142,21 @@ def print_cluster(cluster, labels=nil, n=0)
   print_cluster(cluster.right, labels, n+1) if cluster.right
 end
 
+def rotate_matrix(data)
+  new_data = []
+  row_size = data.size
+  column_size = data[0].size
+  
+  (0...column_size).each do |i|
+    tmp = []
+    (0...row_size).each do |j|
+      tmp << data[j][i]
+    end
+    new_data << tmp
+  end
+  new_data
+end
+
 
 def hcluster(rows, distance=method(:pearson))
   distances = {}
@@ -232,10 +247,10 @@ def kclaster
 end
 
 if __FILE__ == $0
-  blognames, words, data = readfile('blogdata.txt')
-  puts blognames.size
-  puts words.size
-  puts data.size
+  blogs, words, data = readfile('blogdata.txt')
+puts "Number of blog = #{blogs.size}"
+puts "Number of Words = #{words.size}"
+puts "Number of data = #{data.size}"
   cluster = hcluster data
   draw_dendrogram cluster, blognames
   #print_cluster cluster, blognames
