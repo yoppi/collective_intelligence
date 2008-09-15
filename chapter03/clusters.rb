@@ -243,7 +243,7 @@ def readfile(file)
 end
 
 # k-means method for clustring
-def kcluster(data, distance=method(:pearson), k=4)
+def kcluster(data, k=4, distance=method(:pearson))
   memo = {}
   ranges = []
   data.transpose.each do |val|
@@ -305,7 +305,7 @@ puts "Number of data = #{data.size}"
   #cluster = hcluster data
   #draw_dendrogram cluster, blognames
   #print_cluster cluster, blognames
-  cluster = kcluster data
+  cluster = kcluster data, 10
   cluster.each_with_index do |c, i|
     puts "#{i}:"
     c.each {|item| puts "#{blogs[item]}" }
