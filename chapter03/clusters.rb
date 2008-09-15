@@ -157,6 +157,62 @@ def rotate_matrix(data)
   new_data
 end
 
+# k-means method for clustring
+def kcluster(data, k=4, distance=method(:pearson))
+  memo = {} # for memolization
+  ranges = []
+  data.transpose.each do |row|
+    ranges << [row.min, row.max]
+  end
+  
+  # 初期の重心をランダムに生成
+  column_size = data[0].size
+  clusters = []
+  (0...k).each do |_| 
+    cluster = [] 
+    (0...column_size).each {|ai| 
+      cluster << rand * (ranges[ai][1]-ranges[ai][0]) + ranges[ai][0] 
+    } 
+    clusters << cluster
+  end
+  
+  last_matches = nil
+
+  (0...100).each do |iterater|
+    puts "iteration %d" % iterater 
+   
+    best_matches = (0...k).map {|_| [] }
+    
+    data.each_with_index do |row, id|
+      best_match = 0 
+      (0...k).each {|ai| 
+        d = distance.call(clusters[ai], row)
+        if d < distance.call(clusters[best_match], row)
+          best_match = ai
+        end
+      }
+      best_matches[best_match] << id
+    end
+    
+    break if best_matches == last_matches
+    last_matches = best_matches 
+    
+    # 重心をメンバの平均に移す
+    (0...k).each do |ai|
+      avgs = [0.0]*column_size
+      if best_matches[ai].size > 0
+        best_matches[ai].each do |match|
+          data[match].each_with_index {|val, mai| avgs[mai] += val }
+        end
+        #avgs.each_with_index {|val, mai| avgs[ai] /= best_matches[mai].size }
+        avgs = avgs.map {|val| val / best_matches[ai].size }
+        clusters[ai] = avgs
+      end
+    end
+  end
+  last_matches
+end
+
 
 def hcluster(rows, distance=method(:pearson))
   distances = {}
@@ -242,59 +298,6 @@ def readfile(file)
   return rownames, colnames, data
 end
 
-# k-means method for clustring
-def kcluster(data, k=4, distance=method(:pearson))
-  memo = {}
-  ranges = []
-  data.transpose.each do |val|
-    ranges << [val.min, val.max]
-  end
-  
-  # 初期の重心をランダムに生成
-  column_size = data[0].size
-  clusters = []
-  (0...k).each do |i| 
-    cluster = [] 
-    (0...column_size).each {|j| 
-      cluster << rand * (ranges[j][1]-ranges[j][0]) + ranges[j][0] 
-    } 
-  end
-  
-  last_matches = nil
-
-  (0...100).each do |iterater|
-    puts "iteration %d" % iterater 
-   
-    best_matches = (0...k).map {|_| [] }
-    
-    data.each_with_index do |row, id|
-      best_match = 0 
-      (0...k).each {|i| 
-        d = distance.call(clusters[i], row)
-        if d < distance.call(clusters[best_match], row)
-          best_match = i
-        end
-      }
-      best_matches[best_match] << id
-    end
-    
-    break if best_matches == last_matches
-    last_matches = best_matches 
-    
-    # 重心をメンバの平均に移す
-    (0...k).each do |i|
-      avgs = [0.0]*column_size
-      if best_matches[i].size > 0
-        best_matches[i].each do |match|
-          data[match].each_with_index {|val, m| avgs[m] += val }
-        end
-        avg.each_with_index {|val, j| avgs[j] /= best_matches[i].size }
-        clusters[i] = avgs
-      end
-    end
-  end
-  last_matches
-end
 
 
 if __FILE__ == $0
