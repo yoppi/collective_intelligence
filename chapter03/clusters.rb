@@ -1,9 +1,8 @@
 require 'enumerator'
 require 'pp'
 require 'RMagick'
-#require 'rvg/rvg'
+require 'dendrogram'
 include Magick
-RVG::dpi = 72
 
 #module Enumerable
 #  def sum
