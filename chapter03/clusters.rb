@@ -1,6 +1,7 @@
 require 'enumerator'
 require 'pp'
-require 'rvg/rvg'
+require 'RMagick'
+#require 'rvg/rvg'
 include Magick
 RVG::dpi = 72
 
@@ -64,20 +65,6 @@ def draw_node(draw, cluster, x, y, scaling, labels)
     bottom = y + (h_left + h_right)/2
     depth = cluster.distance*scaling
     
-=begin
-    rvg.g do |vertical|
-      vertical.styles(:stroke => 'blue', :stroke_width => 3)
-      # クラスタから子への垂直線
-      vertical.line(x, top+h_left/2, x, bottom-h_right/2)
-      # 左側へのノードへの水平線
-      vertical.line(x, top+h_left/2, x+line_len, top+h_left/2)
-      # 右側へのノードへの水平線
-      vertical.line(x, bottom-h_right/2, x+line_len, bottom-h_right/2)
-
-      draw_node(rvg, cluster.left, x+line_len, top+h_left/2, scaling, labels)
-      draw_node(rvg, cluster.right, x+line_len, bottom-h_right, scaling, labels)
-    end
-=end
     # クラスタから子への垂直線
     draw_line(draw, x, top+h_left/2, x, bottom-h_right/2)
     # 左側へのノードへの水平線
@@ -88,7 +75,6 @@ def draw_node(draw, cluster, x, y, scaling, labels)
     draw_node(draw, cluster.left, x+depth, top+h_left/2, scaling, labels)
     draw_node(draw, cluster.right, x+depth, bottom-h_right/2, scaling, labels)
   else
-    #rvg.text(x+5, y-7, labels[cluster.id]).styles(:font => 'Osaka', :fill => 'black')
     draw_text(draw, x+5, y-10, labels[cluster.id])
   end
 end
@@ -99,18 +85,6 @@ def draw_dendrogram(cluster, labels, img="clusters.jpg")
   depth = get_depth(cluster)
   scaling = (w-150.0)/depth # 幅が固定されているので縮尺する
   
-=begin
-  # RMagickのオブジェクト作成 
-  rvg = RVG.new(w, h)
-  rvg.background_fill = 'white'
-  rvg.g do |center|
-    center.styles(:stroke => 'blue', :stroke_width => 3)
-    center.line(0, h/2, 10, h/2)
-  end
-  draw_node(rvg, cluster, 10, h/2, scaling, labels)  
-  rvg.draw.write(img)
-=end
-
   # 日本語フォントがなぜか使えなかったのでImageList + Drawクラスで
   canvas = ImageList.new
   #canvas.new_image(w, h)
@@ -204,7 +178,6 @@ def kcluster(data, k=4, distance=method(:pearson))
         best_matches[ai].each do |match|
           data[match].each_with_index {|val, mai| avgs[mai] += val }
         end
-        #avgs.each_with_index {|val, mai| avgs[ai] /= best_matches[mai].size }
         avgs = avgs.map {|val| val / best_matches[ai].size }
         clusters[ai] = avgs
       end
@@ -297,7 +270,6 @@ def readfile(file)
   end
   return rownames, colnames, data
 end
-
 
 
 if __FILE__ == $0

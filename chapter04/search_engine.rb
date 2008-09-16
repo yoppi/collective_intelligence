@@ -54,11 +54,11 @@ class Crawler
           url = link[:href]
           next unless url
           
-          url = URI.join(page, url).to_s 
+          url = URI.join(page, url).to_s
           if url[0...4] == 'http' and !indexed?(url)
             new_pages << url
           end
-          link_text = get_text(link)
+          link_text = get_text(url)
           add_linkref(page, url, link_text) 
         end
         dbcommit
