@@ -2,6 +2,7 @@ require 'enumerator'
 require 'pp'
 require 'RMagick'
 require 'dendrogram'
+require 'calc_similarity'
 include Magick
 
 #module Enumerable
@@ -21,7 +22,7 @@ class Bicluster
 
   def initialize(id, vec, opt=nil)
     if opt
-      raise ArgumentError, "Bicluster initialize: must be Hash\n" unless opt.is_a? Hash
+      raise ArgumentError, "Bicluster initialize: opt must be Hash\n" unless opt.is_a? Hash
       @left = opt[:left]
       @right = opt[:right]
       @distance = opt[:distance]
@@ -31,104 +32,48 @@ class Bicluster
   end
 end
 
-def draw_text(draw, x, y, text, size=14, color='black', font="/Library/Fonts/ヒラギノ丸ゴ\ Pro\ W4.otf")
-  draw.font = font 
-  draw.pointsize(size) 
-  draw.stroke(color)
-  draw.text(x, y, text)
-end
+class Cluster
+  include Similality
+  include Dendrogram 
 
-def draw_line(draw, x1, y1, x2, y2, stroke='black', width=2)
-  draw.stroke(stroke)
-  draw.stroke_width(width)
-  draw.line(x1, y1, x2, y2) 
-end
-
-def get_depth(cluster)
-  return 0 if cluster.left == nil and cluster.right == nil
-
-  return [get_depth(cluster.left), get_depth(cluster.right)].max + cluster.distance
-end
-
-def get_height(cluster)
-  return 1 if cluster.left == nil and cluster.right == nil
-  
-  return get_height(cluster.left) + get_height(cluster.right)
-end
-
-def draw_node(draw, cluster, x, y, scaling, labels)
-  if cluster.id < 0
-    h_left = get_height(cluster.left)*20
-    h_right = get_height(cluster.right)*20
-    top = y - (h_left + h_right)/2 
-    bottom = y + (h_left + h_right)/2
-    depth = cluster.distance*scaling
-    
-    # クラスタから子への垂直線
-    draw_line(draw, x, top+h_left/2, x, bottom-h_right/2)
-    # 左側へのノードへの水平線
-    draw_line(draw, x, top+h_left/2, x+depth, top+h_left/2)
-    # 右側へのノードへの水平線
-    draw_line(draw, x, bottom-h_right/2, x+depth, bottom-h_right/2)
-
-    draw_node(draw, cluster.left, x+depth, top+h_left/2, scaling, labels)
-    draw_node(draw, cluster.right, x+depth, bottom-h_right/2, scaling, labels)
-  else
-    draw_text(draw, x+5, y-10, labels[cluster.id])
+  def initialize(cluster)
+    @cluster = cluster 
   end
-end
+  
+  def kcluster(k=4, distance=method(:pearson))
+       
+  end
 
-def draw_dendrogram(cluster, labels, img="clusters.jpg")
-  h = get_height(cluster) * 20
-  w = 1200
-  depth = get_depth(cluster)
-  scaling = (w-150.0)/depth # 幅が固定されているので縮尺する
-  
-  # 日本語フォントがなぜか使えなかったのでImageList + Drawクラスで
-  canvas = ImageList.new
-  #canvas.new_image(w, h)
-  canvas.new_image(w+50, h+50) # 高さと幅がすこしきついので増やす
-  
-  pen = Draw.new
-  draw_line(pen, 0, h/2, 10, h/2, "blue", 2)
-  
-  # 再起的にノードを描写する
-  draw_node(pen, cluster, 10, h/2, scaling, labels)
+  def hcluster()
+    
+  end
 
-  pen.draw(canvas)
-  canvas.write(img)
+  def print_cluster()
+  end
+
+  def setup_cluster
+  end
+
+  def print_cluster(labels, n=0)
+    print ' ' * n
+    if cluster.id < 0
+      puts '-'
+    else
+      unless labels != nil
+        puts cluster.id
+      else
+        puts labels[cluster.id]
+      end
+    end
+
+    print_cluster(cluster.left, labels, n+1) if cluster.left
+    print_cluster(cluster.right, labels, n+1) if cluster.right
+  end
 end
 
 def print_cluster(cluster, labels=nil, n=0)
-  print ' ' * n
-  if cluster.id < 0
-    puts '-'
-  else
-    unless labels != nil
-      puts cluster.id
-    else
-      puts labels[cluster.id]
-    end
-  end
-
-  print_cluster(cluster.left, labels, n+1) if cluster.left
-  print_cluster(cluster.right, labels, n+1) if cluster.right
 end
 
-def rotate_matrix(data)
-  new_data = []
-  row_size = data.size
-  column_size = data[0].size
-  
-  (0...column_size).each do |i|
-    tmp = []
-    (0...row_size).each do |j|
-      tmp << data[j][i]
-    end
-    new_data << tmp
-  end
-  new_data
-end
 
 # k-means method for clustring
 def kcluster(data, k=4, distance=method(:pearson))
@@ -251,6 +196,22 @@ def pearson(x, y)
   1.0 - numerator/denominator
 end
 
+# shuolde use instead of Array#transpose
+def rotate_matrix(data)
+  new_data = []
+  row_size = data.size
+  column_size = data[0].size
+  
+  (0...column_size).each do |i|
+    tmp = []
+    (0...row_size).each do |j|
+      tmp << data[j][i]
+    end
+    new_data << tmp
+  end
+  new_data
+end
+
 def readfile(file)
   lines = []
   File.open(file) {|f| 
@@ -270,18 +231,17 @@ def readfile(file)
   return rownames, colnames, data
 end
 
-
 if __FILE__ == $0
   blogs, words, data = readfile('blogdata.txt')
 puts "Number of blog = #{blogs.size}"
 puts "Number of Words = #{words.size}"
 puts "Number of data = #{data.size}"
-  #cluster = hcluster data
-  #draw_dendrogram cluster, blognames
+  cluster = hcluster data
+  draw_dendrogram cluster, blognames
   #print_cluster cluster, blognames
-  cluster = kcluster data, 10
-  cluster.each_with_index do |c, i|
-    puts "#{i}:"
-    c.each {|item| puts "#{blogs[item]}" }
-  end
+  #cluster = kcluster data, 10
+  #cluster.each_with_index do |c, i|
+  #  puts "#{i}:"
+  #  c.each {|item| puts "#{blogs[item]}" }
+  #end
 end

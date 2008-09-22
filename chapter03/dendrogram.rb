@@ -1,14 +1,14 @@
 require 'RMagick'
 include Magick
 
-class Dendrogram
+module Dendrogram
   def initialize(cluster, labels, img="clusters.png")
     @cluster = cluster 
     @labels = labels
     @img = img
   end
 
-  def draw
+  def draw_dendrogram(cluster, labels, img="clusters.png")
     w = 1200
     h = get_height(@cluster) * 20
     depth = get_depth(@cluster)
@@ -77,5 +77,5 @@ class Dendrogram
 end
 
 if __FILE__ == $0
-  
+  d = Dendrogram.new  
 end
