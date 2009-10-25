@@ -4,12 +4,7 @@ require 'RMagick'
 require 'dendrogram'
 require 'calc_similarity'
 include Magick
-
-#module Enumerable
-#  def sum
-#    self.inject(0) {|total, i| total + i }
-#  end
-#end
+include Dendrogram
 
 class Array
   def sum
@@ -32,46 +27,20 @@ class Bicluster
   end
 end
 
-class Cluster
-  include Similality
-  include Dendrogram 
-
-  def initialize(cluster)
-    @cluster = cluster 
-  end
-  
-  def kcluster(k=4, distance=method(:pearson))
-       
-  end
-
-  def hcluster()
-    
-  end
-
-  def print_cluster()
-  end
-
-  def setup_cluster
-  end
-
-  def print_cluster(labels, n=0)
-    print ' ' * n
-    if cluster.id < 0
-      puts '-'
-    else
-      unless labels != nil
-        puts cluster.id
-      else
-        puts labels[cluster.id]
-      end
-    end
-
-    print_cluster(cluster.left, labels, n+1) if cluster.left
-    print_cluster(cluster.right, labels, n+1) if cluster.right
-  end
-end
-
 def print_cluster(cluster, labels=nil, n=0)
+  print ' ' * n
+  if cluster.id < 0
+    puts '-'
+  else
+    unless labels != nil
+      puts cluster.id
+    else
+      puts labels[cluster.id]
+    end
+  end
+
+  print_cluster(cluster.left, labels, n+1) if cluster.left
+  print_cluster(cluster.right, labels, n+1) if cluster.right
 end
 
 
@@ -196,7 +165,7 @@ def pearson(x, y)
   1.0 - numerator/denominator
 end
 
-# shuolde use instead of Array#transpose
+# should use instead of Array#transpose
 def rotate_matrix(data)
   new_data = []
   row_size = data.size
@@ -233,12 +202,12 @@ end
 
 if __FILE__ == $0
   blogs, words, data = readfile('blogdata.txt')
-puts "Number of blog = #{blogs.size}"
-puts "Number of Words = #{words.size}"
-puts "Number of data = #{data.size}"
+  puts "Number of blog = #{blogs.size}"
+  puts "Number of Words = #{words.size}"
+  puts "Number of data = #{data.size}"
   cluster = hcluster data
-  draw_dendrogram cluster, blognames
-  #print_cluster cluster, blognames
+  draw_dendrogram cluster, blogs
+  #print_cluster cluster, blogs
   #cluster = kcluster data, 10
   #cluster.each_with_index do |c, i|
   #  puts "#{i}:"
